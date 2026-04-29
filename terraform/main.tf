@@ -9,57 +9,26 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region     = var.aws_region
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
+  token      = var.aws_session_token
 }
 
-# ─── Security Group ────────────────────────────────────────────────────────────
-resource "aws_security_group" "app_sg" {
-  name        = "tunis-buy-sell-sg"
-  description = "Security group for tunis-buy-sell-buddy"
-
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name    = "tunis-buy-sell-sg"
-    Project = "tunis-buy-sell-buddy"
+# ─── Récupérer le Security Group existant ─────────────────────
+data "aws_security_group" "app_sg" {
+  filter {
+    name   = "group-name"
+    values = ["tunis-buy-sell-sg"]
   }
 }
 
-# ─── EC2 Instance ──────────────────────────────────────────────────────────────
+# ─── EC2 Instance ─────────────────────────────────────────────
 resource "aws_instance" "app_server" {
-  ami                    = var.ubuntu_ami   # Ubuntu 24.04 LTS - us-east-1
+  ami                    = var.ubuntu_ami
   instance_type          = "t2.large"
-  key_name               = var.key_name    # vockey (AWS Academy)
-  vpc_security_group_ids = [aws_security_group.app_sg.id]
+  key_name               = var.key_name
+  vpc_security_group_ids = [data.aws_security_group.app_sg.id]
 
   root_block_device {
     volume_size = 20
@@ -71,9 +40,13 @@ resource "aws_instance" "app_server" {
     Project = "tunis-buy-sell-buddy"
     Env     = "production"
   }
+
+  lifecycle {
+    ignore_changes = [ami]
+  }
 }
 
-# ─── Elastic IP (IP fixe qui ne change pas au redémarrage) ────────────────────
+# ─── Elastic IP ───────────────────────────────────────────────
 resource "aws_eip" "app_eip" {
   instance = aws_instance.app_server.id
   domain   = "vpc"
