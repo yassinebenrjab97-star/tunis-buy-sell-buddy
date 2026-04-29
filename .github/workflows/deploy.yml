@@ -4,24 +4,24 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # lancement manuel possible depuis GitHub
-
-env:
-  AWS_REGION: us-east-1
+  workflow_dispatch:
 
 jobs:
 
-# ════════════════════════════════════════════════════════════════════════════════
-# JOB 1 — Provisioner l'instance EC2 avec Terraform
-# ════════════════════════════════════════════════════════════════════════════════
   job1_provision_ec2:
     name: "☁️ Job1 — Provision EC2 (Terraform)"
     runs-on: ubuntu-latest
     outputs:
       ec2_ip: ${{ steps.get_ip.outputs.ec2_ip }}
 
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_DEFAULT_REGION: us-east-1
+
     steps:
-      - name: 📥 Checkout du code
+      - name: 📥 Checkout
         uses: actions/checkout@v4
 
       - name: 🔧 Setup Terraform
@@ -30,13 +30,8 @@ jobs:
           terraform_version: 1.7.0
           terraform_wrapper: false
 
-      - name: 🔐 Configurer les credentials AWS Academy
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region:            ${{ env.AWS_REGION }}
+      - name: ✅ Vérifier credentials AWS
+        run: aws sts get-caller-identity
 
       - name: 📁 Terraform Init
         working-directory: ./terraform
@@ -50,120 +45,83 @@ jobs:
         working-directory: ./terraform
         run: terraform apply -auto-approve tfplan
 
-      - name: 📤 Récupérer l'IP Elastic
+      - name: 📤 Récupérer l'IP
         id: get_ip
         working-directory: ./terraform
         run: |
           EC2_IP=$(terraform output -raw instance_public_ip)
           echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
-          echo "✅ EC2 provisionnée — IP : $EC2_IP"
-          echo "🌐 App URL : http://$EC2_IP"
+          echo "✅ IP : $EC2_IP"
 
-      - name: ⏳ Attendre que SSH soit prêt
+      - name: ⏳ Attendre SSH
         run: |
           EC2_IP=${{ steps.get_ip.outputs.ec2_ip }}
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > /tmp/ec2_key.pem
-          chmod 600 /tmp/ec2_key.pem
-          echo "Attente de SSH sur $EC2_IP..."
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > /tmp/key.pem
+          chmod 600 /tmp/key.pem
           for i in $(seq 1 30); do
             if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
-               -i /tmp/ec2_key.pem ubuntu@$EC2_IP "echo SSH_OK" 2>/dev/null | grep -q "SSH_OK"; then
-              echo "✅ SSH disponible après $i tentative(s) !"
+               -i /tmp/key.pem ubuntu@$EC2_IP "echo OK" 2>/dev/null | grep -q "OK"; then
+              echo "✅ SSH prêt !"
               break
             fi
-            echo "Tentative $i/30 — on attend 10s..."
+            echo "Tentative $i/30..."
             sleep 10
           done
-          rm -f /tmp/ec2_key.pem
+          rm -f /tmp/key.pem
 
-# ════════════════════════════════════════════════════════════════════════════════
-# JOB 2 — Installer les prérequis (Node.js 20, Nginx)
-# ════════════════════════════════════════════════════════════════════════════════
   job2_install_prerequisites:
-    name: "📦 Job2 — Installation des prérequis"
+    name: "📦 Job2 — Installation prérequis"
     runs-on: ubuntu-latest
     needs: job1_provision_ec2
 
     steps:
-      - name: 🔑 Configurer la clé SSH
+      - name: 🔑 Clé SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
-          chmod 600 ~/.ssh/ec2_key.pem
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/key.pem
+          chmod 600 ~/.ssh/key.pem
           ssh-keyscan -H ${{ needs.job1_provision_ec2.outputs.ec2_ip }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: 📦 Installer Node.js 20, Nginx sur EC2
+      - name: 📦 Installer Node.js + Nginx
         run: |
-          ssh -i ~/.ssh/ec2_key.pem ubuntu@${{ needs.job1_provision_ec2.outputs.ec2_ip }} << 'ENDSSH'
+          ssh -i ~/.ssh/key.pem ubuntu@${{ needs.job1_provision_ec2.outputs.ec2_ip }} << 'ENDSSH'
             set -e
-
-            echo "======================================="
-            echo "  🔄 Mise à jour système Ubuntu 24.04 "
-            echo "======================================="
-            sudo apt-get update -y && sudo apt-get upgrade -y
-
-            echo "======================================="
-            echo "  📦 Installation Node.js 20 LTS      "
-            echo "======================================="
+            sudo apt-get update -y
             curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-            echo "Node : $(node --version) | npm : $(npm --version)"
-
-            echo "======================================="
-            echo "  🌐 Installation & démarrage Nginx   "
-            echo "======================================="
-            sudo apt-get install -y nginx
+            sudo apt-get install -y nodejs nginx git
             sudo systemctl enable nginx
             sudo systemctl start nginx
-            echo "Nginx : $(nginx -v 2>&1)"
-
-            echo "======================================="
-            echo "  🐙 Git (vérification)               "
-            echo "======================================="
-            sudo apt-get install -y git
-            echo "Git : $(git --version)"
-
-            echo ""
-            echo "✅ Tous les prérequis installés avec succès !"
+            echo "✅ Node: $(node --version) | Nginx: $(nginx -v 2>&1)"
           ENDSSH
 
-# ════════════════════════════════════════════════════════════════════════════════
-# JOB 3 — Build du frontend React/Vite + Déploiement Nginx (mise en prod)
-# ════════════════════════════════════════════════════════════════════════════════
   job3_deploy_production:
     name: "🚀 Job3 — Mise en production"
     runs-on: ubuntu-latest
     needs: [job1_provision_ec2, job2_install_prerequisites]
 
     steps:
-      - name: 🔑 Configurer la clé SSH
+      - name: 🔑 Clé SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
-          chmod 600 ~/.ssh/ec2_key.pem
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/key.pem
+          chmod 600 ~/.ssh/key.pem
           ssh-keyscan -H ${{ needs.job1_provision_ec2.outputs.ec2_ip }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: 📥 Cloner / Mettre à jour le repo sur EC2
+      - name: 📥 Cloner le repo
         run: |
-          ssh -i ~/.ssh/ec2_key.pem ubuntu@${{ needs.job1_provision_ec2.outputs.ec2_ip }} << 'ENDSSH'
+          ssh -i ~/.ssh/key.pem ubuntu@${{ needs.job1_provision_ec2.outputs.ec2_ip }} << 'ENDSSH'
             set -e
             APP_DIR="/home/ubuntu/tunis-buy-sell-buddy"
-
             if [ -d "$APP_DIR/.git" ]; then
-              echo "🔄 Mise à jour du repo existant..."
               cd $APP_DIR && git pull origin main
             else
-              echo "📥 Premier clonage du repo..."
               git clone https://github.com/yassinebenrjab97-star/tunis-buy-sell-buddy.git $APP_DIR
             fi
-            echo "✅ Code source prêt dans $APP_DIR"
           ENDSSH
 
-      - name: 🔐 Injecter le fichier .env (variables Supabase)
+      - name: 🔐 Créer .env.production
         run: |
-          ssh -i ~/.ssh/ec2_key.pem ubuntu@${{ needs.job1_provision_ec2.outputs.ec2_ip }} << ENDSSH
-            set -e
-            # Écrire le .env à la racine du projet (lu par Vite au build)
+          ssh -i ~/.ssh/key.pem ubuntu@${{ needs.job1_provision_ec2.outputs.ec2_ip }} << ENDSSH
             cat > /home/ubuntu/tunis-buy-sell-buddy/.env.production << 'EOF'
           VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY=${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
@@ -172,85 +130,44 @@ jobs:
             echo "✅ .env.production créé"
           ENDSSH
 
-      - name: 🏗️ Build React/Vite (production)
+      - name: 🏗️ Build React/Vite
         run: |
-          ssh -i ~/.ssh/ec2_key.pem ubuntu@${{ needs.job1_provision_ec2.outputs.ec2_ip }} << 'ENDSSH'
+          ssh -i ~/.ssh/key.pem ubuntu@${{ needs.job1_provision_ec2.outputs.ec2_ip }} << 'ENDSSH'
             set -e
             cd /home/ubuntu/tunis-buy-sell-buddy
-
-            echo "📦 npm install..."
             npm install
-
-            echo "🏗️  npm run build..."
             npm run build
-
-            echo "✅ Build terminé — dossier dist généré :"
-            ls -lh dist/
+            echo "✅ Build OK — $(ls dist/ | wc -l) fichiers dans dist/"
           ENDSSH
 
-      - name: 🌐 Configurer Nginx pour servir le frontend
+      - name: 🌐 Configurer Nginx
         run: |
-          ssh -i ~/.ssh/ec2_key.pem ubuntu@${{ needs.job1_provision_ec2.outputs.ec2_ip }} << 'ENDSSH'
+          ssh -i ~/.ssh/key.pem ubuntu@${{ needs.job1_provision_ec2.outputs.ec2_ip }} << 'ENDSSH'
             set -e
-
-            # Écrire la config Nginx
             sudo tee /etc/nginx/sites-available/tunis-buy-sell << 'EOF'
           server {
               listen 80;
               server_name _;
-
-              # Racine = le build Vite
               root /home/ubuntu/tunis-buy-sell-buddy/dist;
               index index.html;
-
-              # SPA : toutes les routes renvoyées vers index.html (React Router)
               location / {
                   try_files $uri $uri/ /index.html;
               }
-
-              # Cache des assets statiques (JS/CSS/images)
-              location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+              location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
                   expires 1y;
                   add_header Cache-Control "public, immutable";
               }
-
-              # Sécurité — headers HTTP
-              add_header X-Frame-Options "SAMEORIGIN" always;
-              add_header X-Content-Type-Options "nosniff" always;
-              add_header X-XSS-Protection "1; mode=block" always;
-
-              # Gzip compression
-              gzip on;
-              gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
-              gzip_min_length 256;
           }
           EOF
-
-            # Activer le site et désactiver le site par défaut
-            sudo ln -sf /etc/nginx/sites-available/tunis-buy-sell \
-                        /etc/nginx/sites-enabled/tunis-buy-sell
+            sudo ln -sf /etc/nginx/sites-available/tunis-buy-sell /etc/nginx/sites-enabled/
             sudo rm -f /etc/nginx/sites-enabled/default
-
-            # Donner accès à Nginx sur le dossier ubuntu
-            sudo chmod o+x /home/ubuntu
-            sudo chmod o+x /home/ubuntu/tunis-buy-sell-buddy
+            sudo chmod o+x /home/ubuntu /home/ubuntu/tunis-buy-sell-buddy
             sudo chmod -R o+r /home/ubuntu/tunis-buy-sell-buddy/dist
-
-            # Vérifier la config Nginx
             sudo nginx -t
-
-            # Recharger Nginx
             sudo systemctl reload nginx
-            echo "✅ Nginx configuré et rechargé !"
           ENDSSH
 
-      - name: 🎉 Afficher l'URL de l'application
+      - name: 🎉 URL finale
         run: |
-          EC2_IP=${{ needs.job1_provision_ec2.outputs.ec2_ip }}
-          echo ""
-          echo "════════════════════════════════════════"
-          echo "  ✅ DÉPLOIEMENT RÉUSSI !"
-          echo "════════════════════════════════════════"
-          echo "  🌐 URL de l'app : http://$EC2_IP"
-          echo "  🔗 Supabase     : https://supabase.com/dashboard"
-          echo "════════════════════════════════════════"
+          echo "✅ DÉPLOIEMENT RÉUSSI !"
+          echo "🌐 http://${{ needs.job1_provision_ec2.outputs.ec2_ip }}"
