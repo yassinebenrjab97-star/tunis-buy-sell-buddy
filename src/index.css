@@ -1,0 +1,267 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 220 26% 14%;
+    --foreground: 210 20% 98%;
+
+    --card: 222 30% 18%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 222 30% 18%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 32 95% 52%;
+    --primary-foreground: 222 30% 10%;
+
+    --secondary: 215 25% 27%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 215 25% 20%;
+    --muted-foreground: 217 10% 65%;
+
+    --accent: 32 95% 52%;
+    --accent-foreground: 222 30% 10%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 215 20% 25%;
+    --input: 215 20% 25%;
+    --ring: 32 95% 52%;
+
+    --radius: 0.75rem;
+    
+    /* Classy dark theme colors with gold accents */
+    --tunisia-gold: 32 95% 52%;
+    --tunisia-gold-bright: 42 100% 60%;
+    --tunisia-dark: 222 30% 12%;
+    --tunisia-darker: 222 35% 8%;
+    --tunisia-charcoal: 220 26% 18%;
+    --tunisia-slate: 215 25% 27%;
+    --tunisia-accent: 32 95% 52%;
+    
+    /* Sophisticated dark gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--tunisia-gold)), hsl(var(--tunisia-gold-bright)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--tunisia-slate)), hsl(var(--tunisia-charcoal)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--tunisia-darker) / 0.95), hsl(var(--tunisia-dark) / 0.9));
+    --gradient-elegant: linear-gradient(180deg, hsl(var(--tunisia-dark)), hsl(var(--tunisia-darker)));
+    --gradient-warm: linear-gradient(45deg, hsl(var(--tunisia-gold) / 0.05), hsl(var(--tunisia-gold) / 0.15));
+    
+    /* Elegant shadows with gold glow */
+    --shadow-elegant: 0 10px 40px -15px hsl(var(--tunisia-gold) / 0.3);
+    --shadow-glow: 0 0 60px hsl(var(--tunisia-gold) / 0.25);
+    --shadow-warm: 0 4px 20px hsl(0 0% 0% / 0.5);
+    --shadow-float: 0 8px 32px -8px hsl(var(--tunisia-gold) / 0.2);
+
+    --sidebar-background: 222 30% 18%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 32 95% 52%;
+    --sidebar-primary-foreground: 222 30% 10%;
+    --sidebar-accent: 215 25% 27%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 215 20% 25%;
+    --sidebar-ring: 32 95% 52%;
+  }
+
+  .dark {
+    --background: 222 35% 8%;
+    --foreground: 210 20% 98%;
+
+    --card: 222 30% 12%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 222 30% 12%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 42 100% 60%;
+    --primary-foreground: 222 30% 10%;
+
+    --secondary: 215 25% 20%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 215 25% 15%;
+    --muted-foreground: 217 10% 65%;
+
+    --accent: 42 100% 60%;
+    --accent-foreground: 222 30% 10%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 215 20% 20%;
+    --input: 215 20% 20%;
+    --ring: 42 100% 60%;
+    
+    /* Dark mode classy colors */
+    --tunisia-gold: 42 100% 60%;
+    --tunisia-gold-bright: 45 100% 65%;
+    --tunisia-dark: 222 35% 8%;
+    --tunisia-darker: 222 40% 5%;
+    --tunisia-charcoal: 220 26% 14%;
+    --tunisia-slate: 215 25% 20%;
+    --tunisia-accent: 42 100% 60%;
+    
+    /* Dark mode sophisticated gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--tunisia-gold)), hsl(var(--tunisia-gold-bright)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--tunisia-slate)), hsl(var(--tunisia-charcoal)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--tunisia-darker) / 0.98), hsl(var(--tunisia-dark) / 0.95));
+    --gradient-elegant: linear-gradient(180deg, hsl(var(--tunisia-dark)), hsl(var(--tunisia-darker)));
+    --gradient-warm: linear-gradient(45deg, hsl(var(--tunisia-gold) / 0.08), hsl(var(--tunisia-gold) / 0.2));
+    
+    /* Dark mode elegant shadows */
+    --shadow-elegant: 0 10px 40px -15px hsl(var(--tunisia-gold) / 0.4);
+    --shadow-glow: 0 0 70px hsl(var(--tunisia-gold) / 0.3);
+    --shadow-warm: 0 4px 20px hsl(0 0% 0% / 0.7);
+    --shadow-float: 0 8px 32px -8px hsl(var(--tunisia-gold) / 0.25);
+
+    --sidebar-background: 222 30% 12%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 42 100% 60%;
+    --sidebar-primary-foreground: 222 30% 10%;
+    --sidebar-accent: 215 25% 20%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 215 20% 20%;
+    --sidebar-ring: 42 100% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    @apply bg-background text-foreground transition-colors duration-300;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}
+
+/* Custom utilities for Tunisian theme */
+@layer utilities {
+  .bg-gradient-tunisia {
+    background: var(--gradient-primary);
+  }
+  
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .bg-gradient-elegant {
+    background: var(--gradient-elegant);
+  }
+  
+  .bg-gradient-warm {
+    background: var(--gradient-warm);
+  }
+  
+  .shadow-tunisia {
+    box-shadow: var(--shadow-elegant);
+  }
+  
+  .shadow-glow-tunisia {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .shadow-warm {
+    box-shadow: var(--shadow-warm);
+  }
+  
+  .shadow-float {
+    box-shadow: var(--shadow-float);
+  }
+  
+  .text-gradient-tunisia {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .border-tunisia {
+    border-color: hsl(var(--tunisia-gold) / 0.3);
+  }
+  
+  .hover-glow {
+    transition: all 0.3s ease;
+  }
+  
+  .hover-glow:hover {
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-2px);
+  }
+  
+  .pattern-tunisia {
+    background-image: 
+      radial-gradient(circle at 1px 1px, hsl(var(--tunisia-gold) / 0.15) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+  
+  /* Mobile optimizations */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  @media (hover: none) and (pointer: coarse) {
+    button, a, [role="button"] {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+  
+  /* RTL Support */
+  [dir="rtl"] {
+    direction: rtl;
+    text-align: right;
+  }
+  
+  /* Ensure buttons don't overflow in any language */
+  button {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Better text wrapping for all languages */
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Custom scrollbar styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--accent) / 0.3);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--tunisia-gold) / 0.5);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--tunisia-gold) / 0.7);
+  }
+}

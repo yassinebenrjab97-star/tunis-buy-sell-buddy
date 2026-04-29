@@ -1,0 +1,90 @@
+-- Insert sample listings with NULL user_id for demo purposes
+INSERT INTO public.listings (
+  title, description, property_type, price, currency, location, city, 
+  condition, year_built, area, area_unit, images, lat, lng,
+  contact_email, contact_phone, features, is_active, user_id
+) VALUES 
+  (
+    'Toyota Corolla 2020 - Excellent État', 
+    'Voiture en parfait état, entretien régulier, climatisation, direction assistée. Idéale pour la ville.',
+    'car', 
+    45000, 'TND', 
+    'Centre-ville, Tunis', 'Tunis',
+    'excellent', 2020, 
+    NULL, NULL,
+    '{"https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500"}',
+    36.8065, 10.1815,
+    'contact@example.com', '+216 12 345 678',
+    '{"climatisation": true, "direction_assistee": true, "bluetooth": true}',
+    true, NULL
+  ),
+  (
+    'Villa avec Piscine - Sidi Bou Said', 
+    'Magnifique villa de 300m² avec piscine, jardin et vue mer. 4 chambres, 3 salles de bain.',
+    'building', 
+    850000, 'TND', 
+    'Sidi Bou Said', 'Tunis',
+    'excellent', 2018, 
+    300, 'm²',
+    '{"https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=500"}',
+    36.8704, 10.3472,
+    'villa@example.com', '+216 98 765 432',
+    '{"piscine": true, "jardin": true, "garage": true, "climatisation": true}',
+    true, NULL
+  ),
+  (
+    'Terrain Agricole 5000m² - Nabeul', 
+    'Terrain agricole fertile, idéal pour plantation d''oliviers ou maraîchage. Accès route principale.',
+    'land', 
+    125000, 'TND', 
+    'Route de Hammamet, Nabeul', 'Nabeul',
+    'good', NULL, 
+    5000, 'm²',
+    '{"https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=500"}',
+    36.4561, 10.7376,
+    'terrain@example.com', '+216 55 123 456',
+    '{"acces_route": true, "eau": true, "electricite": false}',
+    true, NULL
+  ),
+  (
+    'Mercedes Class C - Sousse', 
+    'Mercedes Classe C 2019, cuir, GPS, toit ouvrant. Véhicule de direction, très bien entretenu.',
+    'car', 
+    95000, 'TND', 
+    'Zone touristique, Sousse', 'Sousse',
+    'excellent', 2019, 
+    NULL, NULL,
+    '{"https://images.unsplash.com/photo-1553440569-bcc63803a83d?w=500"}',
+    35.8256, 10.6411,
+    'mercedes@example.com', '+216 22 987 654',
+    '{"cuir": true, "gps": true, "toit_ouvrant": true, "bluetooth": true}',
+    true, NULL
+  ),
+  (
+    'Appartement S+2 - Sfax', 
+    'Appartement moderne 120m², 2 chambres, salon, cuisine équipée. 3ème étage avec ascenseur.',
+    'building', 
+    185000, 'TND', 
+    'Centre-ville, Sfax', 'Sfax',
+    'good', 2015, 
+    120, 'm²',
+    '{"https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500"}',
+    34.7406, 10.7603,
+    'appart@example.com', '+216 74 123 456',
+    '{"ascenseur": true, "cuisine_equipee": true, "balcon": true}',
+    true, NULL
+  ),
+  (
+    'Terrain Constructible - Monastir', 
+    'Terrain de 800m² dans zone résidentielle, titre foncier en règle. Proche toutes commodités.',
+    'land', 
+    160000, 'TND', 
+    'Zone résidentielle, Monastir', 'Monastir',
+    'excellent', NULL, 
+    800, 'm²',
+    '{"https://images.unsplash.com/photo-1500076656116-558758c991c1?w=500"}',
+    35.7643, 10.8113,
+    'terrain2@example.com', '+216 73 456 789',
+    '{"titre_foncier": true, "zone_residentielle": true, "proximite_commodites": true}',
+    true, NULL
+  );
